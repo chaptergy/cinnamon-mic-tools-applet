@@ -1,18 +1,18 @@
 {
   "layout": {
     "type": "layout",
-    "pages": ["panel-settings"],
+    "pages": ["panelSettings"],
 
-    "panel-settings": {
+    "panelSettings": {
       "type": "page",
       "title": "Settings",
       "sections": [
-        "general-section",
-        "keybind-section"
+        "generalSection",
+        "keybindSection"
       ]
     },
 
-    "general-section": {
+    "generalSection": {
       "type": "section",
       "title": "General",
       "keys": [
@@ -20,7 +20,7 @@
         "lightIcons"
       ]
     },  
-    "keybind-section": {
+    "keybindSection": {
       "type": "section",
       "title": "Key Bindings",
       "keys": [
