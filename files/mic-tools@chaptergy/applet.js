@@ -19,13 +19,14 @@ function _(str) {
 
 const DEBUG = false;
 
-const QUtils = require("./js/QUtils.js");
+const Utils = require("./js/Utils.js");
 
-const qLOG = QUtils.qLOG;
+const qLOG = Utils.LOG;
 
-const QIcon = QUtils.QIcon;
-const QPopupLabel = QUtils.QPopupLabel;
-const QPopupSwitch = QUtils.QPopupSwitch;
+const Icon = Utils.Icon;
+const PopupLabel = Utils.PopupLabel;
+const PopupSwitch = Utils.PopupSwitch;
+const PopupHeader = Utils.PopupHeader;
 
 const ICONS = {
   INACTIVE: "/assets/%theme%/microphone-inactive.svg",
@@ -97,7 +98,7 @@ class MicTools extends Applet.TextIconApplet {
       let reload_btn = new PopupMenu.PopupIconMenuItem(
         _("Reload Applet"),
         "view-refresh-symbolic",
-        QIcon.SYMBOLIC,
+        Icon.SYMBOLIC,
         { hover: true }
       );
       reload_btn.connect("activate", this.reloadApplet.bind(this));
@@ -109,7 +110,7 @@ class MicTools extends Applet.TextIconApplet {
       let recompile_btn = new PopupMenu.PopupIconMenuItem(
         _("Recompile Translations"),
         "preferences-desktop-locale-symbolic",
-        QIcon.SYMBOLIC,
+        Icon.SYMBOLIC,
         { hover: true }
       );
       recompile_btn.connect("activate", this.recompileTranslations.bind(this));
@@ -309,7 +310,7 @@ class MicTools extends Applet.TextIconApplet {
 
   createErrorPopup() {
     if (!this._statusInfo.requirements.amixer) {
-      const infoTextAmixer = new QPopupLabel({
+      const infoTextAmixer = new PopupLabel({
         label: _(
           "Command 'amixer' is required but not installed. It is usually contained in the 'alsa-utils' package."
         ),
@@ -318,7 +319,7 @@ class MicTools extends Applet.TextIconApplet {
     }
 
     if (!this._statusInfo.requirements.pactl) {
-      const infoTextPctl = new QPopupLabel({
+      const infoTextPctl = new PopupLabel({
         label: _(
           "Command 'pctl' is required but not installed. It is usually contained in the 'pulseaudio' package."
         ),
@@ -326,7 +327,7 @@ class MicTools extends Applet.TextIconApplet {
       this.menu.addMenuItem(infoTextPctl);
     }
 
-    const infoTextReresh = new QPopupLabel({
+    const infoTextReresh = new PopupLabel({
       label: _(
         "Please install the missing packages, right click on this applet and hit 'Refresh'."
       ),
@@ -335,21 +336,42 @@ class MicTools extends Applet.TextIconApplet {
   }
 
   createPopup() {
-    this.enableListen = new QPopupSwitch({
+    this.header = new PopupHeader({
+      title: "Mic-Tools",
+    });
+
+    // config button
+    let configBtn = new Icon({
+      icon_name: "preferences-system-symbolic",
+      icon_size: 16,
+      icon_type: Icon.SYMBOLIC,
+      reactive: true,
+      activate: true,
+      hover: true,
+    });
+    configBtn.connect("activate", (actor, value) => {
+      this.configureApplet();
+      this.menu.close();
+    });
+    this.header.setButton(configBtn);
+
+    this.menu.addMenuItem(this.header);
+
+    this.enableListen = new PopupSwitch({
       label: _("Listen to microphone"),
       active: this._statusInfo.listen,
     });
     this.enableListen.connect("toggled", this.listenChange.bind(this));
     this.menu.addMenuItem(this.enableListen);
 
-    this.enableAutoListen = new QPopupSwitch({
+    this.enableAutoListen = new PopupSwitch({
       label: _("Automatically listen when in use"),
       active: this.opt.autoListen,
     });
     this.enableAutoListen.connect("toggled", this.autoListenChange.bind(this));
     this.menu.addMenuItem(this.enableAutoListen);
 
-    this.enableMute = new QPopupSwitch({
+    this.enableMute = new PopupSwitch({
       label: _("Mute microphone"),
       active: this._statusInfo.muted,
     });

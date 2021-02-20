@@ -21,8 +21,8 @@ const Util = imports.misc.util;
 
 const PopupMenu = imports.ui.popupMenu;
 
-/** @exports QUtils.qLOG */
-function qLOG(msg, ...data) {
+/** @exports Utils.LOG */
+function LOG(msg, ...data) {
   if (global.DEBUG == false) return;
 
   let str = `\n${msg}: `;
@@ -110,8 +110,8 @@ function qLOG(msg, ...data) {
   }
 }
 
-/** @exports QUtils.QIcon */
-class QIcon {
+/** @exports Utils.Icon */
+class Icon {
   static get FULLCOLOR() {
     return St.IconType.FULLCOLOR;
   }
@@ -207,7 +207,7 @@ class QIcon {
     return this._stIcon;
   }
 
-  /** @param {QIcon.FULLCOLOR|QIcon.SYMBOLIC}  type */
+  /** @param {Icon.FULLCOLOR|Icon.SYMBOLIC}  type */
   setIconType(type) {
     this._stIcon.set_icon_type(type);
   }
@@ -236,10 +236,10 @@ class QIcon {
   }
 }
 
-Signals.addSignalMethods(QIcon.prototype);
+Signals.addSignalMethods(Icon.prototype);
 
-/* @exports QUtils.QPopupItem */
-class QPopupItem extends PopupMenu.PopupBaseMenuItem {
+/** @exports Utils.PopupItem */
+class PopupItem extends PopupMenu.PopupBaseMenuItem {
   constructor({
     reactive = true,
     activate = false,
@@ -255,8 +255,8 @@ class QPopupItem extends PopupMenu.PopupBaseMenuItem {
   }
 }
 
-/** @exports QUtils.QPopupLabel */
-class QPopupLabel extends QPopupItem {
+/** @exports Utils.PopupLabel */
+class PopupLabel extends PopupItem {
   constructor({ label = "" }) {
     super({ reactive: false });
 
@@ -269,16 +269,14 @@ class QPopupLabel extends QPopupItem {
   }
 }
 
-/** @exports QUtils.QPopupSwitch */
-class QPopupSwitch extends QPopupItem {
+/** @exports Utils.PopupSwitch */
+class PopupSwitch extends PopupItem {
   constructor({ label = "", active = false, reactive = true } = {}) {
     super({ reactive: reactive, activate: true });
 
     this.label = new St.Label({ text: label });
-    this.label.add_style_class_name("q-text-medium");
     this._statusLabel = new St.Label({
       text: "",
-      style_class: "popup-inactive-menu-item",
     });
 
     this._switch = new PopupMenu.Switch(active);
@@ -293,9 +291,6 @@ class QPopupSwitch extends QPopupItem {
       align: St.Align.END,
     });
     this._statusBin.child = this._switch.actor;
-
-    // this._statusLabel.set_style('background: blue;');
-    // this.actor.set_style('cursor: pointer;');
   }
 
   setStatus(text) {
@@ -325,5 +320,36 @@ class QPopupSwitch extends QPopupItem {
 
   setToggleState(state) {
     this._switch.setToggleState(state);
+  }
+}
+
+/** @exports Utils.PopupHeader */
+class PopupHeader extends PopupItem {
+  constructor({ title = "" }) {
+    super({ reactive: false });
+
+    this.title = new St.Label({ text: title });
+    this.addActor(this.title, { span: 0, expand: false });
+    this.title.set_style("font-size:130%;font-weight:bold");
+
+    this.button = new PopupItem({
+      replace_class: true,
+      reactive: true,
+      activate: true,
+      hover: true,
+    });
+    this.addActor(this.button.actor, {
+      span: -1,
+      expand: false,
+      align: St.Align.END,
+    });
+  }
+
+  setTitle(text = "") {
+    this.title.set_text(text);
+  }
+
+  setButton(item) {
+    this.button.addActor(item.actor, { span: 0, expand: false });
   }
 }
