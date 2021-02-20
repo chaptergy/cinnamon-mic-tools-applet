@@ -20,3 +20,8 @@ pactl --version
 5. You're done! You should now see a microphone icon in your panel.
 
 To change settings like switching between dark and light icons, right click on the icon and select _Configure..._
+
+## Screenshots
+
+![](screenshots/screenshot1.png)
+![](screenshots/screenshot2.png)
