@@ -255,6 +255,20 @@ class QPopupItem extends PopupMenu.PopupBaseMenuItem {
   }
 }
 
+/** @exports QUtils.QPopupLabel */
+class QPopupLabel extends QPopupItem {
+  constructor({ label = "" }) {
+    super({ reactive: false });
+
+    this._label = new St.Label({ text: label });
+    this.addActor(this._label, { span: 0, expand: false });
+  }
+
+  setLabel(text = "") {
+    this._label.set_text(text);
+  }
+}
+
 /** @exports QUtils.QPopupSwitch */
 class QPopupSwitch extends QPopupItem {
   constructor({ label = "", active = false, reactive = true } = {}) {

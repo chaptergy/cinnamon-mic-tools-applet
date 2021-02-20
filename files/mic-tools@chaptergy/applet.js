@@ -24,6 +24,7 @@ const QUtils = require("./js/QUtils.js");
 const qLOG = QUtils.qLOG;
 
 const QIcon = QUtils.QIcon;
+const QPopupLabel = QUtils.QPopupLabel;
 const QPopupSwitch = QUtils.QPopupSwitch;
 
 const ICONS = {
@@ -54,6 +55,12 @@ class MicTools extends Applet.TextIconApplet {
       streamsActive: 0,
       /** Whether the loopback has been started (for listening) */
       loopbackRunning: false,
+      /** Whether the requirements are fulfilled */
+      requirements: {
+        all: false,
+        amixer: false,
+        pactl: false,
+      },
     };
 
     // Bind Settings
@@ -62,6 +69,8 @@ class MicTools extends Applet.TextIconApplet {
       metadata.uuid,
       instance_id
     );
+
+    this.checkRequirements();
 
     this.settings.bind("lightIcons", "lightIcons", this.setIcon.bind(this));
     this.settings.bind("autoListen", "autoListen", () => {
@@ -76,9 +85,14 @@ class MicTools extends Applet.TextIconApplet {
     this.menuManager = new PopupMenu.PopupMenuManager(this);
     this.menu = new Applet.AppletPopupMenu(this, orientation);
     this.menuManager.addMenu(this.menu);
-    this.createPopup();
 
-    if (DEBUG) {
+    if (this._statusInfo.requirements.all) {
+      this.createPopup();
+    } else {
+      this.createErrorPopup();
+    }
+
+    if (DEBUG || !this._statusInfo.requirements.all) {
       // Reload button
       let reload_btn = new PopupMenu.PopupIconMenuItem(
         _("Reload Applet"),
@@ -88,7 +102,9 @@ class MicTools extends Applet.TextIconApplet {
       );
       reload_btn.connect("activate", this.reloadApplet.bind(this));
       this._applet_context_menu.addMenuItem(reload_btn);
+    }
 
+    if (DEBUG) {
       // Recompile languages button
       let recompile_btn = new PopupMenu.PopupIconMenuItem(
         _("Recompile Translations"),
@@ -112,8 +128,36 @@ class MicTools extends Applet.TextIconApplet {
       base_stream: new Gio.UnixInputStream({ fd: out_fd }),
     });
 
-    this.onKeyChanged();
-    this.readPulseAudioSubscription();
+    if (this._statusInfo.requirements.all) {
+      this.onKeyChanged();
+      this.readPulseAudioSubscription();
+    }
+  }
+
+  /**
+   * Checks whether the required tools are installed
+   */
+  checkRequirements() {
+    try {
+      const [a, amixerOut] = GLib.spawn_command_line_sync("amixer --version");
+      this._statusInfo.requirements.amixer = this.bin2string(
+        amixerOut
+      ).startsWith("amixer ");
+    } catch (e) {
+      this._statusInfo.requirements.amixer = false;
+    }
+    try {
+      const [p, pactlOut] = GLib.spawn_command_line_sync("pactl --version");
+      this._statusInfo.requirements.pactl = this.bin2string(
+        pactlOut
+      ).startsWith("pactl ");
+    } catch (e) {
+      this._statusInfo.requirements.pactl = false;
+    }
+
+    this._statusInfo.requirements.all =
+      this._statusInfo.requirements.amixer &&
+      this._statusInfo.requirements.pactl;
   }
 
   setIcon() {
@@ -261,6 +305,33 @@ class MicTools extends Applet.TextIconApplet {
         this.changeListen(!this._statusInfo.listen);
       }
     );
+  }
+
+  createErrorPopup() {
+    if (!this._statusInfo.requirements.amixer) {
+      const infoTextAmixer = new QPopupLabel({
+        label: _(
+          "Command 'amixer' is required but not installed. It is usually contained in the 'alsa-utils' package."
+        ),
+      });
+      this.menu.addMenuItem(infoTextAmixer);
+    }
+
+    if (!this._statusInfo.requirements.pactl) {
+      const infoTextPctl = new QPopupLabel({
+        label: _(
+          "Command 'pctl' is required but not installed. It is usually contained in the 'pulseaudio' package."
+        ),
+      });
+      this.menu.addMenuItem(infoTextPctl);
+    }
+
+    const infoTextReresh = new QPopupLabel({
+      label: _(
+        "Please install the missing packages, right click on this applet and hit 'Refresh'."
+      ),
+    });
+    this.menu.addMenuItem(infoTextReresh);
   }
 
   createPopup() {
